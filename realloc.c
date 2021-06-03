@@ -33,6 +33,7 @@ void *_realloc(void *ptr, size_t size)
 	if (!new_ptr)
 		return (NULL);
 
+	/* currently assuming that ptr returned by _malloc or glibc malloc */
 	orig_size = *((size_t *)((unsigned char *)ptr - sizeof(size_t)));
 	memcpy(new_ptr, ptr, MIN(orig_size, size));
 
