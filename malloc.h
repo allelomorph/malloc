@@ -1,6 +1,9 @@
 #ifndef MALLOC_H
 #define MALLOC_H
 
+/* size_t */
+#include <stddef.h>
+
 
 /* task 0. Naive malloc */
 /* naive_malloc.c */
