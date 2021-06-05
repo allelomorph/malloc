@@ -33,9 +33,6 @@ typedef struct block_s
 /* allows for mimimum free block size of sizeof(block_t) */
 #define ALIGN (2 * sizeof(void *))
 
-/* static block_t *first_blk; */
-static block_t *first_free_blk;
-
 #define HEADER_SZ (sizeof(size_t) * 2)
 #define BLK_SZ(size) (HEADER_SZ + size)
 
@@ -49,9 +46,7 @@ void *naive_malloc(size_t size);
 
 /* task 1. malloc */
 /* malloc.c */
-void freeListRemove(block_t *blk);
-void freeListAdd(block_t *blk);
-block_t *splitFreeBlock(block_t *free_blk, size_t size);
+void stats(char *prefix);
 void *_malloc(size_t size);
 
 /* task 2. free */

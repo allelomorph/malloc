@@ -1,4 +1,5 @@
 #include "malloc.h"
+#include "free_list.h"
 
 
 /**
@@ -9,4 +10,10 @@
  */
 void _free(void *ptr)
 {
+	if (!ptr)
+		return;
+
+        freeListAdd(BLK_HEADER(ptr));
+        stats("before coalesce");
+        coalesceFreeBlocks();
 }

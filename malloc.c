@@ -1,110 +1,36 @@
 #include "malloc.h"
-/* fprintf perror */
+/* also includes free_list.h */
+#include "free_list.c"
+/* printf fprintf perror */
 #include <stdio.h>
 /* sysconf */
 #include <unistd.h>
 
 
-/**
- * freeListRemove - removes a block from the free list, to be allocated to the
- *   user if an exact size match, or split if larger
- *
- * @blk: block to remove from free list
- */
-void freeListRemove(block_t *blk)
+
+void _cleanup()
 {
-	if (blk == NULL)
-	{
-		fprintf(stderr, "freeListRemove: blk is NULL\n");
-		return;
-	}
+        printf("cleaning memory up\n");
+        if (first_free_blk)
+                if (brk(first_free_blk) != 0)
+                        perror("_cleanup: brk");
 
-	/* list not circular, for now */
-	if (blk == first_free_blk)
-		first_free_blk = blk->next;
-
-	if (blk->prev)
-		blk->prev->next = blk->next;
-
-	if (blk->next)
-		blk->next->prev = blk->prev;
+        first_free_blk = NULL;
+        stats("_cleanup end");
 }
 
 
-/**
- * freeListAdd - adds a block to the free list, deallocating it from heap
- *   memory available to the user
- *
- * @blk: block to add to free list
- */
-void freeListAdd(block_t *blk)
+/* stats prints some debug information regarding the
+ * current program break and the blocks on the free list */
+void stats(char *prefix)
 {
-	block_t *temp;
+        block_t *blk;
+        int i;
 
-	if (!blk)
-	{
-		fprintf(stderr, "freeListAdd: blk is NULL\n");
-		return;
-	}
-
-	/* new head of free list */
-	if (first_free_blk == NULL || first_free_blk > blk)
-	{
-		if (first_free_blk != NULL)
-			first_free_blk->prev = blk;
-		blk->next = first_free_blk;
-		/* not circular list, for now */
-		blk->prev = NULL;
-		first_free_blk = blk;
-	}
-	else
-	{
-		temp = first_free_blk;
-		while (temp->next && temp->next < blk)
-			temp = temp->next;
-		blk->next = temp->next;
-		if (temp->next != NULL)
-			temp->next->prev = blk;
-		blk->prev = temp;
-		temp->next = blk;
-	}
-}
-
-
-/* no way to check if incoming block is free or not? */
-/**
- * splitFreeBlock - splits free block into allocated block and remainder,
- *   remainder becomes new free block
- *
- * @free_blk: unused block from which to carve out allocation
- * @size: block size in bytes, including header, to allocate from free block
- * Return: pointer to first byte in a contiguous region of `size`
- *   bytes in the heap; aligned for any kind of variable
- */
-block_t *splitFreeBlock(block_t *free_blk, size_t size)
-{
-	block_t *new_free_blk;
-
-	if (!free_blk)
-	{
-		fprintf(stderr, "splitFreeBlock: free_blk is NULL\n");
-		return (NULL);
-	}
-
-	if (size < sizeof(block_t) || size % ALIGN)
-	{
-		fprintf(stderr, "splitFreeBlock: size not aligned\n");
-		return (NULL);
-	}
-
-	new_free_blk = (block_t *)((uint8_t *)free_blk + size);
-
-	new_free_blk->next = free_blk->next;
-	new_free_blk->prev = free_blk->prev;
-	new_free_blk->size = free_blk->size - size;
-	free_blk->size = size;
-
-	return (new_free_blk);
+        printf("[%s] program break: %10p\n", prefix, (void *)sbrk(0));
+        printf("[%s] free list:\n", prefix);
+	for (blk = first_free_blk, i = 0; blk; blk = blk->next, i++)
+                printf("(%i) <%10p> (size: %lu)\n", i, (void *)blk, blk->size);
 }
 
 
