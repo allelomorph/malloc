@@ -9,6 +9,7 @@
 #define ALIGN sizeof(void *)
 #endif
 
+
 /**
  * addPageToHeap - adds one page of memory to heap
  *
@@ -109,6 +110,9 @@ void *naive_malloc(size_t size)
 	static size_t used_blk_ct;
 	void *brk_pt, *payload_addr, *new_blk_addr, *unused_blk_addr;
 	size_t new_blk_sz, unused_blk_sz;
+
+	(void)first_blk;
+	(void)first_free_blk;
 
 	/* init starting address on first call */
 	if (!blk_0_addr)
