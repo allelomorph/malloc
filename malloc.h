@@ -3,6 +3,9 @@
 
 /* size_t */
 #include <stddef.h>
+/* uint8_t */
+#include <stdint.h>
+
 
 /**
  * struct block_s - heap allocation block header
@@ -16,7 +19,7 @@ typedef struct block_s
 {
 	size_t prev_size;
 	size_t size;
-	/* if allocated, payload begins after size; if not, then next & prev */
+	/* payload begins after size in allocated blocks */
 	struct block_s *next;
 	struct block_s *prev;
 /*
@@ -30,14 +33,14 @@ typedef struct block_s
 /* allows for mimimum free block size of sizeof(block_t) */
 #define ALIGN (2 * sizeof(void *))
 
-static block_t *first_blk;
+/* static block_t *first_blk; */
 static block_t *first_free_blk;
 
 #define HEADER_SZ (sizeof(size_t) * 2)
 #define BLK_SZ(size) (HEADER_SZ + size)
 
-#define BLK_PAYLOAD(ptr) ((void *)((unit8_t *)ptr + HEADER_SZ))
-#define BLK_HEADER(ptr) ((block_t *)((unit8_t *)ptr - HEADER_SZ))
+#define BLK_PAYLOAD(ptr) ((void *)((uint8_t *)ptr + HEADER_SZ))
+#define BLK_HEADER(ptr) ((block_t *)((uint8_t *)ptr - HEADER_SZ))
 
 
 /* task 0. Naive malloc */

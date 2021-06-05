@@ -1,110 +1,110 @@
 #include "malloc.h"
+/* fprintf perror */
+#include <stdio.h>
+/* sysconf */
+#include <unistd.h>
 
 
-/* removes a block from the free list and adjusts the head accordingly */
+/**
+ * freeListRemove - removes a block from the free list, to be allocated to the
+ *   user if an exact size match, or split if larger
+ *
+ * @blk: block to remove from free list
+ */
 void freeListRemove(block_t *blk)
 {
-	if (!blk)
+	if (blk == NULL)
+	{
+		fprintf(stderr, "freeListRemove: blk is NULL\n");
 		return;
+	}
 
 	/* list not circular, for now */
 	if (blk == first_free_blk)
 		first_free_blk = blk->next;
 
-        if (blk->prev)
-                blk->prev->next = blk->next;
+	if (blk->prev)
+		blk->prev->next = blk->next;
 
-        if (blk->next)
-                blk->next->prev = blk->prev;
-
-	/* should be at least one block before current program break */
-	next_blk = (block_t *)((unsigned char *)blk + blk->size);
-	/* mark block as used by flipping first bit in next block size */
-	next_blk->size |= 0x1;
+	if (blk->next)
+		blk->next->prev = blk->prev;
 }
 
 
-/* adds a block to the free list keeping the list sorted by the block begin address, this helps when scanning for continuous blocks */
+/**
+ * freeListAdd - adds a block to the free list, deallocating it from heap
+ *   memory available to the user
+ *
+ * @blk: block to add to free list
+ */
 void freeListAdd(block_t *blk)
 {
-	block_t *temp, *next_blk;
+	block_t *temp;
 
 	if (!blk)
 	{
 		fprintf(stderr, "freeListAdd: blk is NULL\n");
-		retrun;
+		return;
 	}
 
-        if (first_free_blk == NULL || first_free_blk > blk) /* new head of free list */
-        {
-		if (first_free_blk == NULL || blk == first_block)
-		{
-			/* unused block at original program break; mark previous "block" as in use to prevent reading before start of heap */
-			blk->size |= 0x1;
-			blk->prev_size = 0;
-		}
-
-                if (first_free_blk != NULL)
-                        first_free_blk->prev = blk;
-                blk->next = first_free_blk;
+	/* new head of free list */
+	if (first_free_blk == NULL || first_free_blk > blk)
+	{
+		if (first_free_blk != NULL)
+			first_free_blk->prev = blk;
+		blk->next = first_free_blk;
 		/* not circular list, for now */
 		blk->prev = NULL;
 		first_free_blk = blk;
-        }
-        else
-        {
+	}
+	else
+	{
 		temp = first_free_blk;
-                while (temp->next && temp->next < blk)
-                        temp = temp->next;
-                blk->next = temp->next;
+		while (temp->next && temp->next < blk)
+			temp = temp->next;
+		blk->next = temp->next;
 		if (temp->next != NULL)
 			temp->next->prev = blk;
 		blk->prev = temp;
-                temp->next = blk;
-        }
-
-	/* record new_free_blk size in following block */
-	next_blk = (block_t *)((unsigned char *)blk + blk->size);
-	next_blk->prev_size = blk->size;
-	/* mark block as unused by flipping first bit in next block size */
-	next_blk->size &= ~0x1;
+		temp->next = blk;
+	}
 }
 
-/* incoming size should be block size, not payload size */
-/* splits the block b by creating a new block after size bytes, new block is returned */
+
+/* no way to check if incoming block is free or not? */
+/**
+ * splitFreeBlock - splits free block into allocated block and remainder,
+ *   remainder becomes new free block
+ *
+ * @free_blk: unused block from which to carve out allocation
+ * @size: block size in bytes, including header, to allocate from free block
+ * Return: pointer to first byte in a contiguous region of `size`
+ *   bytes in the heap; aligned for any kind of variable
+ */
 block_t *splitFreeBlock(block_t *free_blk, size_t size)
 {
-        block_t *new_free_blk, *next_blk;
-
-	/* no way to check if incoming block is free or not? first bit in size is used for status of _previous_ block */
+	block_t *new_free_blk;
 
 	if (!free_blk)
 	{
 		fprintf(stderr, "splitFreeBlock: free_blk is NULL\n");
-		retrun (NULL);
+		return (NULL);
 	}
 
 	if (size < sizeof(block_t) || size % ALIGN)
 	{
 		fprintf(stderr, "splitFreeBlock: size not aligned\n");
-		retrun (NULL);
+		return (NULL);
 	}
 
-        new_free_blk = (block_t *)((unsigned char *)free_blk + size);
+	new_free_blk = (block_t *)((uint8_t *)free_blk + size);
 
 	new_free_blk->next = free_blk->next;
 	new_free_blk->prev = free_blk->prev;
-        new_free_blk->size = free_blk->size - size;
-        free_blk->size = size;
+	new_free_blk->size = free_blk->size - size;
+	free_blk->size = size;
 
-	/* record new_free_blk size in following block */
-	next_blk = (block_t *)((unsigned char *)new_free_blk + new_free_blk->size);
-	next_blk->prev_size = new_free_blk->size;
-
-	/* mark previous block as allocated */
-	new_free_blk->size |= 0x1;
-
-        return new_free_blk;
+	return (new_free_blk);
 }
 
 
@@ -117,8 +117,9 @@ block_t *splitFreeBlock(block_t *free_blk, size_t size)
  */
 void *_malloc(size_t size)
 {
-        block_t *blk, *new_blk, *next_blk;
-        size_t aligned_sz, unused_blk_sz, page_sz;
+	block_t *blk, *new_blk;
+	size_t aligned_sz, new_blk_sz;
+	long page_sz;
 
 	/* presumes alignment of starting progam break and previous blocks */
 	aligned_sz = size + (ALIGN - (size % ALIGN));
@@ -126,28 +127,21 @@ void *_malloc(size_t size)
 	for (blk = first_free_blk; blk; blk = blk->next)
 	{
 		/* first fit, later upgrade to best fit LIFO */
-                if (blk->size >= BLK_SZ(aligned_sz))
-                {
-                        freeListRemove(blk);
+		if (blk->size >= BLK_SZ(aligned_sz))
+		{
+			freeListRemove(blk);
 
-			/* perfect sized block found, return it */
-                        if (blk->size == BLK_SZ(aligned_sz))
-			{
-				/* should be at least one empty block before program break */
-				next_blk = (block_t *)((unsigned char *)blk + blk->size);
-				/* mark block as used by flipping first bit in next block size */
-				next_blk->size |= 0x1;
+			if (blk->size == BLK_SZ(aligned_sz))
+				return (BLK_PAYLOAD(blk));
 
-                                return (BLK_PAYLOAD(blk));
-			}
-
-			/* block larger then request, split and add fragemnt to free list */
-                        new_blk = splitFreeBlock(blk, BLK_SZ(aligned_sz));
-                        freeListAdd(new_blk);
+			new_blk = splitFreeBlock(blk, BLK_SZ(aligned_sz));
+			freeListAdd(new_blk);
 
 			return (BLK_PAYLOAD(blk));
-                }
+		}
 	}
+
+	/* no block large enough found, need allocate new one */
 
 	/* ensure new program break is page-aligned */
 	page_sz = sysconf(_SC_PAGESIZE);
@@ -157,40 +151,31 @@ void *_malloc(size_t size)
 		return (NULL);
 	}
 
-	for (unused_blk_sz = page_sz;
-	     /* unused region should fit header of an empty free block at end, in case of splitting? */
-	     unused_blk_sz < BLK_SZ(aligned_sz) + sizeof(block_t);
-	     unused_blk_sz += page_sz)
+	for (new_blk_sz = page_sz;
+	     /* should fit an empty free block at end, in case of splitting? */
+	     new_blk_sz < BLK_SZ(aligned_sz) + sizeof(block_t);
+	     new_blk_sz += page_sz)
 	{}
 
 	/* new unused block at end of heap virtual address space */
-        blk = (block_t *)sbrk(unused_blk_sz);
-	if ((void *)blk == (void *)-1)
+	new_blk = sbrk(new_blk_sz);
+	if (new_blk == (void *)-1)
 	{
 		perror("_malloc: sbrk");
 		return (NULL);
 	}
+	new_blk = (block_t *)new_blk;
 
-        blk->size = unused_blk_sz;
-	freeListAdd(blk);
+	new_blk->size = new_blk_sz;
+	freeListAdd(new_blk);
 
-#ifdef ZZZ
-	/* but, added to head of free list (LIFO) */
-        blk->next = first_free_blk;
-	if (first_free_blk == NULL) /* first call of _malloc */
+	if (new_blk_sz > BLK_SZ(aligned_sz) + sizeof(block_t))
 	{
-		/* new unused block at starting program break; mark previous "block" as in use to prevent reading before start of heap */
-		aligned_sz |= 0x1;
-		first_free_blk = blk;
+		blk = splitFreeBlock(new_blk, BLK_SZ(aligned_sz));
+		freeListAdd(blk);
 	}
 	else
-		first_free_blk->prev = blk;
-#endif
-        if (unused_blk_sz > BLK_SZ(aligned_sz & ~0x1) + sizeof(block_t))
-        {
-		new_blk = splitFreeBlock(blk, BLK_SZ(aligned_sz & ~0x1));
-		freeListAdd(new_blk);
-        }
+		blk = new_blk;
 
 	return (BLK_PAYLOAD(blk));
 }
