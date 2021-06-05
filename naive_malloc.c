@@ -4,8 +4,10 @@
 /* fprintf perror */
 #include <stdio.h>
 
+#ifdef ALIGN
+#undef ALIGN
 #define ALIGN sizeof(void *)
-
+#endif
 
 /**
  * addPageToHeap - adds one page of memory to heap
