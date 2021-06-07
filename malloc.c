@@ -29,23 +29,23 @@ void printFreeList(char *prefix)
 void *_malloc(size_t size)
 {
 	block_t *blk, *new_blk;
-	size_t aligned_sz, new_blk_sz;
+	size_t algnd_pyld_sz, new_blk_sz;
 	long page_sz;
 
 	/* presumes alignment of starting progam break and previous blocks */
-	aligned_sz = size + (ALIGN - (size % ALIGN));
+	algnd_pyld_sz = size + (ALIGN - (size % ALIGN));
 
 	for (blk = first_free_blk; blk; blk = blk->next)
 	{
 		/* first fit, later upgrade to best fit LIFO */
-		if (blk->size >= BLK_SZ(aligned_sz))
+		if (blk->size >= BLK_SZ(algnd_pyld_sz))
 		{
 			freeListRemove(blk);
 
-			if (blk->size == BLK_SZ(aligned_sz))
+			if (blk->size == BLK_SZ(algnd_pyld_sz))
 				return (BLK_PAYLOAD(blk));
 
-			new_blk = splitFreeBlock(blk, BLK_SZ(aligned_sz));
+			new_blk = splitFreeBlock(blk, BLK_SZ(algnd_pyld_sz));
 			freeListAdd(new_blk);
 
 			return (BLK_PAYLOAD(blk));
@@ -64,7 +64,7 @@ void *_malloc(size_t size)
 
 	for (new_blk_sz = page_sz;
 	     /* should fit an empty free block at end, in case of splitting? */
-	     new_blk_sz < BLK_SZ(aligned_sz) + sizeof(block_t);
+	     new_blk_sz < BLK_SZ(algnd_pyld_sz) + sizeof(block_t);
 	     new_blk_sz += page_sz)
 	{}
 
@@ -80,9 +80,9 @@ void *_malloc(size_t size)
 	new_blk->size = new_blk_sz;
 	freeListAdd(new_blk);
 
-	if (new_blk_sz > BLK_SZ(aligned_sz) + sizeof(block_t))
+	if (new_blk_sz > BLK_SZ(algnd_pyld_sz) + sizeof(block_t))
 	{
-		blk = splitFreeBlock(new_blk, BLK_SZ(aligned_sz));
+		blk = splitFreeBlock(new_blk, BLK_SZ(algnd_pyld_sz));
 		freeListAdd(blk);
 		freeListRemove(new_blk);
 	}
