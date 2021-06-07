@@ -1,8 +1,12 @@
-#include "free_list.h"
+#include "malloc.h"
 /* fprintf perror */
 #include <stdio.h>
 /* sysconf */
 #include <unistd.h>
+
+
+/* static block_t *first_blk; */
+static block_t *first_free_blk;
 
 
 /**

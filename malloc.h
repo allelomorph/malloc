@@ -44,6 +44,12 @@ typedef struct block_s
 /* naive_malloc.c */
 void *naive_malloc(size_t size);
 
+/* free_list.c */
+void freeListRemove(block_t *blk);
+void freeListAdd(block_t *blk);
+block_t *splitFreeBlock(block_t *free_blk, size_t size);
+void coalesceFreeBlocks(void);
+
 /* task 1. malloc */
 /* malloc.c */
 void stats(char *prefix);
@@ -62,6 +68,8 @@ void *_calloc(size_t nmemb, size_t size);
 void *_realloc(void *ptr, size_t size);
 
 /* task 5. Multithreading */
+
+
 
 
 #endif /* MALLOC_H */

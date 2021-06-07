@@ -1,5 +1,5 @@
 #include "malloc.h"
-/* also includes free_list.h */
+/* freeListAdd freeListRemove splitFreeBlock */
 #include "free_list.c"
 /* printf fprintf perror */
 #include <stdio.h>
@@ -7,22 +7,9 @@
 #include <unistd.h>
 
 
-
-void _cleanup()
-{
-        printf("cleaning memory up\n");
-        if (first_free_blk)
-                if (brk(first_free_blk) != 0)
-                        perror("_cleanup: brk");
-
-        first_free_blk = NULL;
-        stats("_cleanup end");
-}
-
-
 /* stats prints some debug information regarding the
  * current program break and the blocks on the free list */
-void stats(char *prefix)
+void printFreeList(char *prefix)
 {
         block_t *blk;
         int i;
