@@ -7,8 +7,6 @@
 #include <unistd.h>
 
 
-/* stats prints some debug information regarding the
- * current program break and the blocks on the free list */
 void printFreeList(char *prefix)
 {
         block_t *blk;
@@ -86,9 +84,8 @@ void *_malloc(size_t size)
 	{
 		blk = splitFreeBlock(new_blk, BLK_SZ(aligned_sz));
 		freeListAdd(blk);
+		freeListRemove(new_blk);
 	}
-	else
-		blk = new_blk;
 
-	return (BLK_PAYLOAD(blk));
+	return (BLK_PAYLOAD(new_blk));
 }

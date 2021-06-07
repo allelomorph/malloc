@@ -52,7 +52,7 @@ void coalesceFreeBlocks(void);
 
 /* task 1. malloc */
 /* malloc.c */
-void stats(char *prefix);
+void printFreeList(char *prefix);
 void *_malloc(size_t size);
 
 /* task 2. free */
