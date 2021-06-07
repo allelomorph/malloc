@@ -147,8 +147,6 @@ void coalesceFreeBlocks(void)
                 }
         }
 
-        stats("after coalesce");
-
 	/* check free list to see if there is a large unused block at the end of the heap */
 	for (curr = first_free_blk; curr; curr = curr->next)
         {

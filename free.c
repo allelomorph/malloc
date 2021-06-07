@@ -13,6 +13,5 @@ void _free(void *ptr)
 		return;
 
         freeListAdd(BLK_HEADER(ptr));
-        stats("before coalesce");
         coalesceFreeBlocks();
 }
