@@ -13,5 +13,6 @@ void _free(void *ptr)
 		return;
 
         freeListAdd(BLK_HEADER(ptr));
+	printFreeList("before coalesce");
         coalesceFreeBlocks();
 }

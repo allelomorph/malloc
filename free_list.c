@@ -147,6 +147,8 @@ void coalesceFreeBlocks(void)
                 }
         }
 
+        printFreeList("after coalesce");
+
 	/* check free list to see if there is a large unused block at the end of the heap */
 	for (curr = first_free_blk; curr; curr = curr->next)
         {
@@ -159,4 +161,5 @@ void coalesceFreeBlocks(void)
 			break;
 		}
 	}
+        printFreeList("after release of large block");
 }
