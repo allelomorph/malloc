@@ -19,6 +19,7 @@ void *_realloc(void *ptr, size_t size)
 {
 	void *new_ptr;
 	size_t orig_size;
+	block_t *blk;
 
 	if (ptr == NULL)
 		return (_malloc(size));
@@ -28,6 +29,11 @@ void *_realloc(void *ptr, size_t size)
 		_free(ptr);
 		return (NULL);
 	}
+
+	/* return block unchanged if requested size is same (once aligned) */
+	blk = BLK_HEADER(ptr);
+	if (PAYLOAD_SZ(blk->size) == size + (ALIGN - (size % ALIGN)))
+		return (ptr);
 
 	new_ptr = _malloc(size);
 	if (!new_ptr)
