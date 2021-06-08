@@ -1,5 +1,7 @@
 #include "malloc.h"
 
+#include <stdio.h>
+
 
 /**
  * _free - TBD
@@ -11,6 +13,8 @@ void _free(void *ptr)
 {
 	if (!ptr)
 		return;
+
+	printf("\tuser freed %p\n", ptr);
 
         freeListAdd(BLK_HEADER(ptr));
 	printFreeList("before coalesce");
