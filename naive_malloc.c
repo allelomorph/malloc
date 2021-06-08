@@ -111,9 +111,6 @@ void *naive_malloc(size_t size)
 	void *brk_pt, *payload_addr, *new_blk_addr, *unused_blk_addr;
 	size_t new_blk_sz, unused_blk_sz;
 
-	(void)first_blk;
-	(void)first_free_blk;
-
 	/* init starting address on first call */
 	if (!blk_0_addr)
 	{

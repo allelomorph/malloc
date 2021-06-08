@@ -35,6 +35,7 @@ typedef struct block_s
 
 #define HEADER_SZ (sizeof(size_t) * 2)
 #define BLK_SZ(size) (HEADER_SZ + size)
+#define PAYLOAD_SZ(size) (size - HEADER_SZ)
 
 #define BLK_PAYLOAD(ptr) ((void *)((uint8_t *)ptr + HEADER_SZ))
 #define BLK_HEADER(ptr) ((block_t *)((uint8_t *)ptr - HEADER_SZ))
