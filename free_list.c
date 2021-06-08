@@ -5,7 +5,6 @@
 #include <unistd.h>
 
 
-/* static block_t *first_blk; */
 static block_t *first_free_blk;
 
 
@@ -23,7 +22,6 @@ void freeListRemove(block_t *blk)
 		return;
 	}
 
-	/* list not circular, for now */
 	if (blk == first_free_blk)
 		first_free_blk = blk->next;
 
@@ -43,35 +41,18 @@ void freeListRemove(block_t *blk)
  */
 void freeListAdd(block_t *blk)
 {
-	block_t *temp;
-
 	if (!blk)
 	{
 		fprintf(stderr, "freeListAdd: blk is NULL\n");
 		return;
 	}
 
-	/* new head of free list */
-	if (first_free_blk == NULL || first_free_blk > blk)
-	{
-		if (first_free_blk != NULL)
-			first_free_blk->prev = blk;
-		blk->next = first_free_blk;
-		/* not circular list, for now */
-		blk->prev = NULL;
-		first_free_blk = blk;
-	}
-	else
-	{
-		temp = first_free_blk;
-		while (temp->next && temp->next < blk)
-			temp = temp->next;
-		blk->next = temp->next;
-		if (temp->next != NULL)
-			temp->next->prev = blk;
-		blk->prev = temp;
-		temp->next = blk;
-	}
+	/* LIFO free list, always add to head */
+	if (first_free_blk != NULL)
+		first_free_blk->prev = blk;
+	blk->next = first_free_blk;
+	blk->prev = NULL;
+	first_free_blk = blk;
 }
 
 
