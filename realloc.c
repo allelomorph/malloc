@@ -7,7 +7,7 @@
 
 /**
  * _realloc - changes the size of the memory block pointed by ptr to size
- *   bytes. The contents will be unchanged in the range from the start of the
+ *   bytes; contents will be unchanged in the range from the start of the
  *   region up to the minimum of the old and new sizes
  *
  * @ptr: pointer to the memory space to resize
@@ -18,7 +18,7 @@
 void *_realloc(void *ptr, size_t size)
 {
 	void *new_ptr;
-        block_t *blk;
+	block_t *blk;
 
 	if (ptr == NULL)
 		return (_malloc(size));

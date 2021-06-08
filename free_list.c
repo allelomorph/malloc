@@ -94,21 +94,22 @@ block_t *splitFreeBlock(block_t *free_blk, size_t size)
 
 
 /**
- * coalesceFreeBlocks - TBD
+ * coalesceFreeBlocks - linear traversal of free list, merging any block with
+ *   any other free block that is next in the list and also in an contiguous
+ *   address space of heap
  */
 void coalesceFreeBlocks(void)
 {
-        block_t *curr;
-        void *pgm_brk;
+	block_t *curr;
+	void *pgm_brk;
 	long page_sz;
 
-        pgm_brk = sbrk(0);
-        if (pgm_brk == (void *)-1)
-        {
-                perror("colaesceFreeBlocks: sbrk");
-                return;
-        }
-
+	pgm_brk = sbrk(0);
+	if (pgm_brk == (void *)-1)
+	{
+		perror("colaesceFreeBlocks: sbrk");
+		return;
+	}
 	page_sz = sysconf(_SC_PAGESIZE);
 	if (page_sz == -1)
 	{
@@ -118,19 +119,18 @@ void coalesceFreeBlocks(void)
 
 	/* if free block is contiguous to the next in the list, merge them */
 	for (curr = first_free_blk; curr; curr = curr->next)
-        {
-                if ((uint8_t *)curr + curr->size == (uint8_t *)curr->next)
-                {
-                        curr->size += curr->next->size;
-                        curr->next = curr->next->next;
-                        if (curr->next)
-                                curr->next->prev = curr;
-                }
-        }
-
-	/* check free list to see if there is a large unused block at the end of the heap */
+	{
+		if ((uint8_t *)curr + curr->size == (uint8_t *)curr->next)
+		{
+			curr->size += curr->next->size;
+			curr->next = curr->next->next;
+			if (curr->next)
+				curr->next->prev = curr;
+		}
+	}
+	/* check free list for large unused block at the end of the heap */
 	for (curr = first_free_blk; curr; curr = curr->next)
-        {
+	{
 		if ((uint8_t *)curr + curr->size == pgm_brk &&
 		    curr->size >= (size_t)page_sz)
 		{
