@@ -5,6 +5,8 @@
 #include <stdio.h>
 /* sysconf */
 #include <unistd.h>
+/* pthread_mutex_init/_destroy/_lock/_unlock */
+#include <pthread.h>
 
 
 /**
@@ -26,10 +28,6 @@ void destroyFreeListMutex(void)
 	pthread_mutex_destroy(&free_list_mutex);
 }
 
-/*
-		pthread_mutex_lock(&task_status_mutex);
-		pthread_mutex_unlock(&task_status_mutex);
-*/
 
 /**
  * printFreeList - test print of current program break and free list
@@ -51,10 +49,13 @@ void printFreeList(char *prefix)
 
 	printf("[%s] program break: %10p\n", prefix, pgm_brk);
 	printf("[%s] free list:\n", prefix);
+
+	pthread_mutex_lock(&free_list_mutex);
 	for (blk = free_list_head, i = 0; blk; blk = blk->next, i++)
-                printf("\t(%i) @%10p size:%lu next:%10p prev:%10p\n",
+		printf("\t(%i) @%10p size:%lu next:%10p prev:%10p\n",
 		       i, (void *)blk, blk->size,
 		       (void *)(blk->next), (void *)(blk->prev));
+	pthread_mutex_unlock(&free_list_mutex);
 }
 
 
@@ -73,12 +74,14 @@ void *_malloc(size_t size)
 	/* presumes alignment of starting progam break and previous blocks */
 	algnd_pyld_sz = size + (ALIGN - (size % ALIGN));
 
+	pthread_mutex_lock(&free_list_mutex);
 	for (blk = free_list_head; blk; blk = blk->next)
 	{
 		/* first fit linear search, LIFO population of list */
 		if (blk->size >= BLK_SZ(algnd_pyld_sz))
 			break;
 	}
+	pthread_mutex_unlock(&free_list_mutex);
 
 	/* no adequate block found, need create new one by extending break */
 	if (!blk)

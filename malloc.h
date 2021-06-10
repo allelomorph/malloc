@@ -54,6 +54,8 @@ void coalesceFreeBlocks(void);
 
 /* task 1. malloc */
 /* malloc.c */
+void initFreeListMutex(void) __attribute__ ((constructor));
+void destroyFreeListMutex(void) __attribute__ ((destructor));
 void printFreeList(char *prefix);
 void *_malloc(size_t size);
 

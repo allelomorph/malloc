@@ -3,6 +3,8 @@
 #include <stdio.h>
 /* sysconf */
 #include <unistd.h>
+/* pthread_mutex_lock pthread_mutex_unlock */
+#include <pthread.h>
 
 
 static block_t *free_list_head;
@@ -23,6 +25,8 @@ void freeListRemove(block_t *blk)
 		return;
 	}
 
+	pthread_mutex_lock(&free_list_mutex);
+
 	if (blk == free_list_head)
 		free_list_head = blk->next;
 
@@ -31,6 +35,8 @@ void freeListRemove(block_t *blk)
 
 	if (blk->next)
 		blk->next->prev = blk->prev;
+
+	pthread_mutex_unlock(&free_list_mutex);
 }
 
 
@@ -48,12 +54,16 @@ void freeListAdd(block_t *blk)
 		return;
 	}
 
+	pthread_mutex_lock(&free_list_mutex);
+
 	/* LIFO free list, always add to head */
 	if (free_list_head != NULL)
 		free_list_head->prev = blk;
 	blk->next = free_list_head;
 	blk->prev = NULL;
 	free_list_head = blk;
+
+	pthread_mutex_unlock(&free_list_mutex);
 }
 
 
@@ -84,6 +94,8 @@ block_t *newFreeBlock(size_t algnd_pyld_sz)
 	     new_blk_sz += page_sz)
 	{}
 
+	pthread_mutex_lock(&free_list_mutex);
+
 	/* new unused block at end of heap virtual address space */
 	new_blk = sbrk(new_blk_sz);
 	if (new_blk == (void *)-1)
@@ -91,10 +103,11 @@ block_t *newFreeBlock(size_t algnd_pyld_sz)
 		perror("newFreeBlock: sbrk");
 		return (NULL);
 	}
-
 	new_blk->size = new_blk_sz;
-	freeListAdd(new_blk);
 
+	pthread_mutex_unlock(&free_list_mutex);
+
+	freeListAdd(new_blk);
 	return (new_blk);
 }
 
@@ -125,12 +138,16 @@ block_t *splitFreeBlock(block_t *free_blk, size_t size)
 		return (NULL);
 	}
 
+	pthread_mutex_lock(&free_list_mutex);
+
 	new_free_blk = (block_t *)((uint8_t *)free_blk + size);
 
 	new_free_blk->next = free_blk->next;
 	new_free_blk->prev = free_blk->prev;
 	new_free_blk->size = free_blk->size - size;
 	free_blk->size = size;
+
+	pthread_mutex_unlock(&free_list_mutex);
 
 	return (new_free_blk);
 }
@@ -144,23 +161,9 @@ block_t *splitFreeBlock(block_t *free_blk, size_t size)
 void coalesceFreeBlocks(void)
 {
 	block_t *curr;
-	void *pgm_brk;
-	long page_sz;
 
-	pgm_brk = sbrk(0);
-	if (pgm_brk == (void *)-1)
-	{
-		perror("colaesceFreeBlocks: sbrk");
-		return;
-	}
-	page_sz = sysconf(_SC_PAGESIZE);
-	if (page_sz == -1)
-	{
-		perror("colaesceFreeBlocks: sysconf");
-		return;
-	}
+	pthread_mutex_lock(&free_list_mutex);
 
-	/* if free block is contiguous to the next in the list, merge them */
 	for (curr = free_list_head; curr; curr = curr->next)
 	{
 		if ((uint8_t *)curr + curr->size == (uint8_t *)curr->next)
@@ -171,16 +174,6 @@ void coalesceFreeBlocks(void)
 				curr->next->prev = curr;
 		}
 	}
-	/* check free list for large unused block at the end of the heap */
-	for (curr = free_list_head; curr; curr = curr->next)
-	{
-		if ((uint8_t *)curr + curr->size == pgm_brk &&
-		    curr->size >= (size_t)page_sz)
-		{
-			freeListRemove(curr);
-			if (brk(curr) != 0)
-				perror("coalesceFreeBlocks: brk");
-			break;
-		}
-	}
+
+	pthread_mutex_unlock(&free_list_mutex);
 }
