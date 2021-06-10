@@ -98,7 +98,9 @@ int findUnusedBlock(void *blk_0_addr, size_t *size, size_t used_blk_ct,
 
 
 /**
- * naive_malloc - TBD
+ * naive_malloc - naive implementation of memory allocation in heap, new
+ *   blocks are allocated by pushing program break forward and no list of free
+ *   blocks is maintained for reuse
  *
  * @size: size of memory requested by user, in bytes
  * Return: pointer to first byte in a contiguous region of `size`
