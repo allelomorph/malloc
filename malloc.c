@@ -8,6 +8,30 @@
 
 
 /**
+ * initFreeListMutex - initializes global mutex for free block list before
+ *   main
+ */
+void initFreeListMutex(void)
+{
+	pthread_mutex_init(&free_list_mutex, NULL);
+}
+
+
+/**
+ * destroyFreeListMutex - destroys global mutex for free block list
+ *   after main
+ */
+void destroyFreeListMutex(void)
+{
+	pthread_mutex_destroy(&free_list_mutex);
+}
+
+/*
+		pthread_mutex_lock(&task_status_mutex);
+		pthread_mutex_unlock(&task_status_mutex);
+*/
+
+/**
  * printFreeList - test print of current program break and free list
  *
  * @prefix: label string for output, intended to give troubleshooting context
@@ -31,48 +55,6 @@ void printFreeList(char *prefix)
                 printf("\t(%i) @%10p size:%lu next:%10p prev:%10p\n",
 		       i, (void *)blk, blk->size,
 		       (void *)(blk->next), (void *)(blk->prev));
-}
-
-
-/**
- * newFreeBlock - creates virgin free block in heap by extending program break
- *
- * @algnd_pyld_sz: size of memory requested by user, in bytes, aligned by
- *   double word
- * Return: pointer to new block in free list, or NULL on failure
- */
-block_t *newFreeBlock(size_t algnd_pyld_sz)
-{
-	block_t *new_blk;
-	size_t new_blk_sz;
-	long page_sz;
-
-	/* ensure new program break is page-aligned */
-	page_sz = sysconf(_SC_PAGESIZE);
-	if (page_sz == -1)
-	{
-		fprintf(stderr, "newFreeBlock: sysconf failure\n");
-		return (NULL);
-	}
-
-	for (new_blk_sz = (size_t)page_sz;
-	     /* should fit an empty free block at end, in case of splitting */
-	     new_blk_sz < BLK_SZ(algnd_pyld_sz) + sizeof(block_t);
-	     new_blk_sz += page_sz)
-	{}
-
-	/* new unused block at end of heap virtual address space */
-	new_blk = sbrk(new_blk_sz);
-	if (new_blk == (void *)-1)
-	{
-		perror("newFreeBlock: sbrk");
-		return (NULL);
-	}
-
-	new_blk->size = new_blk_sz;
-	freeListAdd(new_blk);
-
-	return (new_blk);
 }
 
 
