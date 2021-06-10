@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 
-static block_t *first_free_blk;
+static block_t *free_list_head;
 static pthread_mutex_t free_list_mutex;
 
 
@@ -23,8 +23,8 @@ void freeListRemove(block_t *blk)
 		return;
 	}
 
-	if (blk == first_free_blk)
-		first_free_blk = blk->next;
+	if (blk == free_list_head)
+		free_list_head = blk->next;
 
 	if (blk->prev)
 		blk->prev->next = blk->next;
@@ -49,11 +49,11 @@ void freeListAdd(block_t *blk)
 	}
 
 	/* LIFO free list, always add to head */
-	if (first_free_blk != NULL)
-		first_free_blk->prev = blk;
-	blk->next = first_free_blk;
+	if (free_list_head != NULL)
+		free_list_head->prev = blk;
+	blk->next = free_list_head;
 	blk->prev = NULL;
-	first_free_blk = blk;
+	free_list_head = blk;
 }
 
 
@@ -161,7 +161,7 @@ void coalesceFreeBlocks(void)
 	}
 
 	/* if free block is contiguous to the next in the list, merge them */
-	for (curr = first_free_blk; curr; curr = curr->next)
+	for (curr = free_list_head; curr; curr = curr->next)
 	{
 		if ((uint8_t *)curr + curr->size == (uint8_t *)curr->next)
 		{
@@ -172,7 +172,7 @@ void coalesceFreeBlocks(void)
 		}
 	}
 	/* check free list for large unused block at the end of the heap */
-	for (curr = first_free_blk; curr; curr = curr->next)
+	for (curr = free_list_head; curr; curr = curr->next)
 	{
 		if ((uint8_t *)curr + curr->size == pgm_brk &&
 		    curr->size >= (size_t)page_sz)
