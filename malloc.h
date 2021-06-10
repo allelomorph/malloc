@@ -41,37 +41,23 @@ typedef struct block_s
 #define BLK_HEADER(ptr) ((block_t *)((uint8_t *)ptr - HEADER_SZ))
 
 
-/* task 0. Naive malloc */
 /* naive_malloc.c */
 void *naive_malloc(size_t size);
 
-/* free_list.c */
-void freeListRemove(block_t *blk);
-void freeListAdd(block_t *blk);
-block_t *newFreeBlock(size_t algnd_pyld_sz);
-block_t *splitFreeBlock(block_t *free_blk, size_t size);
-void coalesceFreeBlocks(void);
-
-/* task 1. malloc */
 /* malloc.c */
 void initFreeListMutex(void) __attribute__ ((constructor));
 void destroyFreeListMutex(void) __attribute__ ((destructor));
 void printFreeList(char *prefix);
 void *_malloc(size_t size);
 
-/* task 2. free */
 /* free.c */
 void _free(void *ptr);
 
-/* task 3. calloc */
 /* calloc.c */
 void *_calloc(size_t nmemb, size_t size);
 
-/* task 4. realloc */
 /* realloc.c */
 void *_realloc(void *ptr, size_t size);
-
-/* task 5. Multithreading */
 
 
 #endif /* MALLOC_H */

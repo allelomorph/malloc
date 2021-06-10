@@ -1,4 +1,6 @@
 #include "malloc.h"
+/* free_list_head free_list_mutex freeListRemove/Add coalesceFreeBlocks */
+#include "free_list.h"
 /* perror */
 #include <stdio.h>
 /* sysconf */
@@ -23,6 +25,7 @@ void trimProgramBreak(void)
 		perror("trimProgramBreak: sbrk");
 		return;
 	}
+
 	page_sz = sysconf(_SC_PAGESIZE);
 	if (page_sz == -1)
 	{

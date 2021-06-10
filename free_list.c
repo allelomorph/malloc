@@ -1,14 +1,10 @@
-#include "malloc.h"
+#include "free_list.h"
 /* fprintf perror */
 #include <stdio.h>
 /* sysconf */
 #include <unistd.h>
 /* pthread_mutex_lock pthread_mutex_unlock */
 #include <pthread.h>
-
-
-static block_t *free_list_head;
-static pthread_mutex_t free_list_mutex;
 
 
 /**
