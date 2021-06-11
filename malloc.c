@@ -28,7 +28,7 @@ void printFreeList(char *prefix)
 	printf("[%s] program break: %10p\n", prefix, pgm_brk);
 	printf("[%s] free list:\n", prefix);
 	for (blk = first_free_blk, i = 0; blk; blk = blk->next, i++)
-                printf("\t(%i) @%10p size:%lu next:%10p prev:%10p\n",
+		printf("\t(%i) @%10p size:%lu next:%10p prev:%10p\n",
 		       i, (void *)blk, blk->size,
 		       (void *)(blk->next), (void *)(blk->prev));
 }
